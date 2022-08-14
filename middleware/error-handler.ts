@@ -1,4 +1,4 @@
-const ApiError = require("../error/errorClass");
+import { ApiError } from "../error/errorClass";
 import { Request, Response, NextFunction } from "express";
 
 const errorHandler = (
@@ -7,8 +7,6 @@ const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.log(req.file);
-  console.log(error);
   return res
     .status(error.statusCode as number)
     .json({ message: error.message, error: error.error });

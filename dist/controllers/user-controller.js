@@ -20,7 +20,9 @@ const Address = (req, res, next) => __awaiter(void 0, void 0, void 0, function* 
         const user_id = req.id;
         if (yield db_query_1.default.checkAddress(user_id, lat, long)) {
             yield db_query_1.default.addAddress(user_id, address, lat, long);
-            return res.status(201).json({ message: "Address added succesfully" });
+            return res
+                .status(201)
+                .json({ message: "Address added succesfully" });
         }
         else {
             const err = new Error("Address details already exists in table.");

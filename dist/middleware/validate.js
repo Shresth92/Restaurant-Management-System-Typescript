@@ -28,13 +28,11 @@ const authValidate = (req, res, next) => __awaiter(void 0, void 0, void 0, funct
 });
 const registerValidate = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log(1);
         yield joi_1.default.object({
             name: joi_1.default.string().required(),
             email: joi_1.default.string().email().lowercase().required(),
             password: joi_1.default.string().min(5).required(),
         }).validateAsync(req.body);
-        console.log(2);
         next();
     }
     catch (error) {

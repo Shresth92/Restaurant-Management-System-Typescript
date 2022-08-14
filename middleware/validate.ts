@@ -1,6 +1,6 @@
-import Joi, { number, string } from "joi";
+import Joi from "joi";
 import { Request, Response, NextFunction } from "express";
-import { ApiError, CustomError } from "../error/errorClass";
+import { ApiError } from "../error/errorClass";
 
 const authValidate = async (
   req: Request,
@@ -24,13 +24,11 @@ const registerValidate = async (
   next: NextFunction
 ) => {
   try {
-    console.log(1);
     await Joi.object({
       name: Joi.string().required(),
       email: Joi.string().email().lowercase().required(),
       password: Joi.string().min(5).required(),
     }).validateAsync(req.body);
-    console.log(2);
     next();
   } catch (error: any) {
     return next(ApiError.error(500, error.message, error));

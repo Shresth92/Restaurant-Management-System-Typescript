@@ -33,12 +33,12 @@ const authenticateToken = (req, res, next) => __awaiter(void 0, void 0, void 0, 
             return next(errorClass_1.ApiError.error(403, err.message, err));
         try {
             (() => __awaiter(void 0, void 0, void 0, function* () {
-                const count = yield db_query_1.default.searchSessionEnd(payload.session_id);
+                const end_at = yield db_query_1.default.searchSessionEnd(payload.session_id);
                 if (payload.role == Role["admin"] ||
                     payload.role == Role["subadmin"]) {
                     req.created_by = payload.id;
                 }
-                if (count) {
+                if (end_at == null) {
                     req.session_id = payload.session_id;
                     req.id = payload.id;
                     req.role = payload.role;

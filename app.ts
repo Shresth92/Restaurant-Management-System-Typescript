@@ -9,6 +9,7 @@ import subAdminRouter from "./routes/sub-admin";
 import errorHandler from "./middleware/error-handler";
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/admin", adminRouter);
 app.use("/sub-admin", subAdminRouter);

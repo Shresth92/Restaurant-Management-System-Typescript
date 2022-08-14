@@ -9,16 +9,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const ApiError = require("../error/errorClass");
+const errorClass_1 = require("../error/errorClass");
 const errorHandler = (error, req, res, next) => {
-    console.log(req.file);
-    console.log(error);
     return res
         .status(error.statusCode)
         .json({ message: error.message, error: error.error });
 };
 const pageNotFound = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const err = new Error(`Page Not found`);
-    return next(ApiError.error(404, "No page found", err.message));
+    return next(errorClass_1.ApiError.error(404, "No page found", err.message));
 });
 exports.default = { errorHandler, pageNotFound };

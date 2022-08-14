@@ -15,17 +15,30 @@ enum Role {
 const Register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, email, password } = req.body;
-    const users = await query.users(email);
-    const hashpass = await bcrypt.hash(password, 10);
+    const users = await query.users(email as string);
+    const hashpass: string = await bcrypt.hash(
+      password as string,
+      10 as number
+    );
     if (users.length == 0) {
       const role = req.setrole as Role;
-      await query.registerUser(name, email, hashpass, role, req.created_by);
+      await query.registerUser(
+        name as string,
+        email as string,
+        hashpass as string,
+        role as Role,
+        req.created_by as string
+      );
       return res.status(201).send("You have registered succesfully.");
     }
-    let user_id = users[0].id;
-    const roles = await query.checkRole(user_id, req.setrole as Role);
+    let user_id = users[0].id as string;
+    const roles = await query.checkRole(user_id as string, req.setrole as Role);
     if (roles.length == 0) {
-      await query.createRole(user_id, req.setrole!, req.created_by);
+      await query.createRole(
+        user_id as string,
+        req.setrole! as Role,
+        req.created_by as string
+      );
       return res.status(201).send("You have registered succesfully.");
     } else {
       const err = new Error("User details already exists in table.");
@@ -39,20 +52,25 @@ const Register = async (req: Request, res: Response, next: NextFunction) => {
 const Login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    const users = await query.users(email);
-    const user_id = users[0].id;
-    const checkRole = await query.checkRole(user_id, req.setrole!);
+    const users = await query.users(email as string);
+    const user_id = users[0].id as string;
+    const checkRole = await query.checkRole(
+      user_id as string,
+      req.setrole! as Role
+    );
     if (users.length == 0 || checkRole.length == 0) {
       const err = new Error("User have to register first.");
       return next(ApiError.error(401, "Please register first.", err.message));
     } else {
-      if (await bcrypt.compare(password, users[0].password)) {
-        let session_id = await query.createSession(user_id);
-        const accessToken = jwt.sign(
+      if (
+        await bcrypt.compare(password as string, users[0].password as string)
+      ) {
+        let session_id: string = await query.createSession(user_id);
+        const accessToken: string = jwt.sign(
           {
-            id: user_id,
-            session_id: session_id,
-            role: checkRole[0].role_name,
+            id: user_id as string,
+            session_id: session_id as string,
+            role: checkRole[0].role_name as Role,
           },
           process.env.ACCESS_TOKEN_SECRET as string
         );
@@ -69,8 +87,8 @@ const Login = async (req: Request, res: Response, next: NextFunction) => {
 
 const Logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const session_id = req.session_id;
-    await query.setSessionEnd(session_id);
+    const session_id: string = req.session_id as string;
+    await query.setSessionEnd(session_id as string);
     res.send("You are logged out succesfully.");
   } catch (error) {
     return next(error);

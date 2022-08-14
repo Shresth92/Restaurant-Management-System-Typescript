@@ -100,7 +100,7 @@ const searchSessionEnd = (session_id) => __awaiter(void 0, void 0, void 0, funct
         const sessionText = `SELECT end_at FROM session WHERE id=$1;`;
         const sessionValues = [session_id];
         const search = yield pool.query(sessionText, sessionValues);
-        return search.rowCount;
+        return search.rows[0].end_at;
     }
     catch (e) {
         throw e;
@@ -108,7 +108,7 @@ const searchSessionEnd = (session_id) => __awaiter(void 0, void 0, void 0, funct
 });
 const all = (limit, page, role) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const userText = `with all_users as (select id, name, email
+        const userText = `with all_users as (select u.id, name, email
                                       from users u
                                                 join roles r on u.id = r.user_id
                                       where role_name = $1
@@ -120,7 +120,10 @@ const all = (limit, page, role) => __awaiter(void 0, void 0, void 0, function* (
                     limit $2 offset $3;`;
         const userValues = [role, limit, page * limit];
         const users = yield pool.query(userText, userValues);
-        return { count: users.rowCount, users: users.rows };
+        return {
+            count: users.rowCount,
+            users: users.rows,
+        };
     }
     catch (e) {
         throw e;
@@ -131,30 +134,53 @@ const checkRestaurant = (name, address) => __awaiter(void 0, void 0, void 0, fun
         const restaurantText = `SELECT id FROM restaurant WHERE name=$1 and address=$2 and archived_at is NULL;`;
         const restaurantValues = [name, address];
         const search = yield pool.query(restaurantText, restaurantValues);
-        return search.rows;
+        return search.rowCount;
     }
     catch (e) {
         throw e;
     }
 });
-const createRestaurant = (id, name, address, lat, long) => __awaiter(void 0, void 0, void 0, function* () {
+const createRestaurant = (user_id, name, address, lat, long) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const lat_long = `(${lat}, ${long})`;
         const restaurantText = `INSERT INTO restaurant(user_id, name, address, lat_long, updated_at)
                           VALUES ($1, $2, $3, $4, $5)`;
-        const restaurantValues = [id, name, address, lat_long, currDate()];
+        const restaurantValues = [user_id, name, address, lat_long, currDate()];
         yield pool.query(restaurantText, restaurantValues);
     }
     catch (e) {
         throw e;
     }
 });
+const createRestaurantImage = (bucket_name, path, res_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const client = yield pool.connect();
+    try {
+        yield client.query("BEGIN");
+        const imageText = `INSERT INTO images(bucket_name, path, updated_at)
+                          VALUES ($1, $2, $3) RETURNING id`;
+        const imageValues = [bucket_name, path, currDate()];
+        const imageQuery = yield client.query(imageText, imageValues);
+        const id = imageQuery.rows[0].id;
+        const restaurantText = `INSERT INTO restaurantimages(image_id, res_id, updated_at)
+                          VALUES ($1, $2, $3)`;
+        const restaurantValues = [id, res_id, currDate()];
+        yield client.query(restaurantText, restaurantValues);
+        yield client.query("COMMIT");
+    }
+    catch (e) {
+        yield client.query("ROLLBACK");
+        throw e;
+    }
+    finally {
+        client.release();
+    }
+});
 const checkDish = (name, res_id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const dishText = `SELECT archived_at FROM dishes WHERE name = $1 and restaurant_id = $2;`;
+        const dishText = `SELECT id FROM dishes WHERE name = $1 and rest_id = $2 and archived_at is null;`;
         const dishValues = [name, res_id];
         const dish = yield pool.query(dishText, dishValues);
-        return dish.rows;
+        return dish.rowCount;
     }
     catch (e) {
         throw e;
@@ -165,12 +191,40 @@ const createDish = (res_id, name) => __awaiter(void 0, void 0, void 0, function*
         const restaurantText = `SELECT id FROM restaurant WHERE id=$1 and archived_at is NULL;`;
         const restaurantValues = [res_id];
         const restaurant = yield pool.query(restaurantText, restaurantValues);
-        const dishText = `INSERT INTO dishes(res_id, name, updated_at) VALUES ($1,$2,$3)`;
-        const dishValues = [restaurant.rows[0].id, name, currDate()];
-        yield pool.query(dishText, dishValues);
+        if (restaurant.rowCount) {
+            const dishText = `INSERT INTO dishes(rest_id, name, updated_at) VALUES ($1,$2,$3)`;
+            const dishValues = [restaurant.rows[0].id, name, currDate()];
+            yield pool.query(dishText, dishValues);
+        }
+        else {
+            throw new Error("Restaurant not exist.");
+        }
     }
     catch (e) {
         throw e;
+    }
+});
+const createDishImage = (bucket_name, path, dish_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const client = yield pool.connect();
+    try {
+        yield client.query("BEGIN");
+        const imageText = `INSERT INTO images(bucket_name, path, updated_at)
+                          VALUES ($1, $2, $3) RETURNING id`;
+        const imageValues = [bucket_name, path, currDate()];
+        const imageQuery = yield client.query(imageText, imageValues);
+        const id = imageQuery.rows[0].id;
+        const dishText = `INSERT INTO dishimages(image_id, dish_id, updated_at)
+                          VALUES ($1, $2, $3)`;
+        const dishValues = [id, dish_id, currDate()];
+        yield client.query(dishText, dishValues);
+        yield client.query("COMMIT");
+    }
+    catch (e) {
+        yield client.query("ROLLBACK");
+        throw e;
+    }
+    finally {
+        client.release();
     }
 });
 const allRestaurants = (limit, page, id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -185,20 +239,37 @@ const allRestaurants = (limit, page, id) => __awaiter(void 0, void 0, void 0, fu
                     limit $2 offset $3;`;
         const restaurantValues = [id, limit, limit * page];
         const search = yield pool.query(restaurantText, restaurantValues);
-        return search.rows;
+        return {
+            count: search.rowCount,
+            rows: search.rows,
+        };
     }
     catch (e) {
         throw e;
     }
 });
+const RestaurantImagePath = (rest_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const RestaurantImagePathText = `select ri.res_id, path
+                    from restaurantimages ri
+                            join images i on ri.image_id = i.id
+                    where ri.res_id = ANY($1)
+                      and ri.archived_at is null
+                      and i.archived_at is null`;
+    const RestaurantImagePathValues = [rest_id];
+    const search = yield pool.query(RestaurantImagePathText, RestaurantImagePathValues);
+    return {
+        count: search.rowCount,
+        rows: search.rows,
+    };
+});
 const allDishes = (limit, page, res_id, id) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const dishText = `with my_dishes as (select d.name
+        const dishText = `with my_dishes as (select d.id , d.name, d.rest_id
                                               from dishes d
-                                                      join restaurant r on d.restaurant_id = r.id
+                                                      join restaurant r on d.rest_id = r.id
                                               where d.archived_at is null
                                                 and r.archived_at is null
-                                                and id = $1
+                                                and d.rest_id = $1
                                                 and (length($2) is null or
                                                     user_id = $2::uuid))
                       Select *
@@ -207,11 +278,28 @@ const allDishes = (limit, page, res_id, id) => __awaiter(void 0, void 0, void 0,
                       limit $3 offset $4;`;
         const dishValues = [res_id, id, limit, limit * page];
         const search = yield pool.query(dishText, dishValues);
-        return search.rows;
+        return {
+            count: search.rowCount,
+            rows: search.rows,
+        };
     }
     catch (e) {
         throw e;
     }
+});
+const DishImagePath = (dish_id) => __awaiter(void 0, void 0, void 0, function* () {
+    const DishImagePathText = `select di.dish_id, path
+                    from dishimages di
+                            join images i on di.image_id = i.id
+                    where di.dish_id = ANY($1)
+                      and di.archived_at is null
+                      and i.archived_at is null`;
+    const DishImagePathValues = [dish_id];
+    const search = yield pool.query(DishImagePathText, DishImagePathValues);
+    return {
+        count: search.rowCount,
+        rows: search.rows,
+    };
 });
 const checkAddress = (user_id, lat, long) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -219,7 +307,7 @@ const checkAddress = (user_id, lat, long) => __awaiter(void 0, void 0, void 0, f
         const addressText = `SELECT address from address where user_id=$1 and lat_long~=$2 and archived_at=null`;
         const addressValues = [user_id, lat_long];
         const search = yield pool.query(addressText, addressValues);
-        return search.rows.length;
+        return search.rowCount;
     }
     catch (e) {
         throw e;
@@ -236,31 +324,15 @@ const addAddress = (user_id, address, lat, long) => __awaiter(void 0, void 0, vo
         throw e;
     }
 });
-const allAddress = (id, limit, page) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const addressText = `with my_address as (select user_id, address
-                                      from address a
-                                      where (length($3) is null or
-                                                    user_id = $3::uuid)
-                                        and archived_at is null)
-                  Select *
-                  from my_address mr
-                          join (select count(*) from my_address) as count on true
-                  limit $1 offset $2;`;
-        const addressValues = [limit, limit * page, id];
-        const search = yield pool.query(addressText, addressValues);
-        return search.rows;
-    }
-    catch (e) {
-        throw e;
-    }
-});
 const Address = (user_ids) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const addressText = `SELECT user_id, address from address where archived_at is null and user_id = ANY($1)`;
         const addressValues = [user_ids];
         const search = yield pool.query(addressText, addressValues);
-        return { count: search.rowCount, search: search.rows };
+        return {
+            count: search.rowCount,
+            search: search.rows,
+        };
     }
     catch (e) {
         throw e;
@@ -277,12 +349,15 @@ exports.default = {
     all,
     checkRestaurant,
     createRestaurant,
+    createRestaurantImage,
     checkDish,
     createDish,
+    createDishImage,
     allRestaurants,
     allDishes,
-    allAddress,
     checkAddress,
     addAddress,
     Address,
+    RestaurantImagePath,
+    DishImagePath,
 };

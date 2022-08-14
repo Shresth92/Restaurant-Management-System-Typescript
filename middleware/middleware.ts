@@ -27,17 +27,19 @@ const authenticateToken = async (
       if (err) return next(ApiError.error(403, err.message, err));
       try {
         (async () => {
-          const count = await query.searchSessionEnd((<any>payload).session_id);
+          const end_at = await query.searchSessionEnd(
+            (<any>payload).session_id
+          );
           if (
             (<any>payload).role == Role["admin"] ||
             (<any>payload).role == Role["subadmin"]
           ) {
-            req.created_by = (<any>payload).id;
+            req.created_by = (<any>payload).id as string;
           }
-          if (count) {
-            req.session_id = (<any>payload).session_id;
-            req.id = (<any>payload).id;
-            req.role = (<any>payload).role;
+          if (end_at == null) {
+            req.session_id = (<any>payload).session_id as string;
+            req.id = (<any>payload).id as string;
+            req.role = (<any>payload).role as Role;
             next();
           } else {
             return next(
