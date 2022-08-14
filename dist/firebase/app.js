@@ -7,7 +7,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const firebase_admin_1 = __importDefault(require("firebase-admin"));
 const { STORAGE_BUCKET } = process.env;
-const serviceAccountkey = require("../rms-restaurant-image-upload-firebase-adminsdk-v7o2p-210c4c6032.json");
+const serviceAccountkey = require("./serviceAccountKey.json");
 firebase_admin_1.default.initializeApp({
     credential: firebase_admin_1.default.credential.cert(serviceAccountkey),
     storageBucket: STORAGE_BUCKET,

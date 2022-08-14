@@ -3,4 +3,4 @@
 .env
 database.json
 tsconfig.json
-rms-restaurant-image-upload-firebase-adminsdk-v7o2p-210c4c6032.json
+/firebase/serviceAccountKey.json

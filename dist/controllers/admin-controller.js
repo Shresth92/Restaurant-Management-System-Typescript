@@ -49,7 +49,9 @@ const all = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         for (let i = 0; i < users.count; i++) {
             formatted_users[i].address = addressMap.get(formatted_users[i].id) || [];
         }
-        return res.status(200).send(formatted_users);
+        return res
+            .status(200)
+            .send({ totalRows: formatted_users[0].count, rows: formatted_users });
     }
     catch (error) {
         return next(errorClass_1.ApiError.error(500, "Something went wrong.", error.message));
