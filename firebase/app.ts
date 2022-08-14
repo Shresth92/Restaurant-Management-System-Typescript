@@ -5,6 +5,7 @@ import firebase from "firebase-admin";
 
 const { STORAGE_BUCKET } = process.env;
 
+import "./serviceAccountKey.json";
 const serviceAccountkey = require("./serviceAccountKey.json");
 
 firebase.initializeApp({
