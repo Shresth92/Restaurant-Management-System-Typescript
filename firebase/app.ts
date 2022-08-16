@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import firebase from "firebase-admin";
+import firebase, { ServiceAccount } from "firebase-admin";
 
 const { STORAGE_BUCKET } = process.env;
 
