@@ -1,6 +1,10 @@
 import express from "express";
+import multer from "multer";
 
 const router = express.Router();
+
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single("file");
 
 import authController from "../controllers/auth-controller";
 import cmsController from "../controllers/admin-controller";
@@ -42,6 +46,16 @@ router.post(
   authController.Register
 );
 router.get("/all", validate.filterValidate, cmsController.all);
+router.post(
+  "/restaurants/:res_id/add-restaurant-images",
+  upload,
+  cmsController.RestaurantImage
+);
+router.post(
+  "/dishes/:dish_id/add-dish-images",
+  upload,
+  cmsController.DishImage
+);
 router.post("/logout", authController.Logout);
 
 export default router;

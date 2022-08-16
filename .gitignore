@@ -4,3 +4,4 @@
 database.json
 tsconfig.json
 /firebase/serviceAccountKey.json
+/dist

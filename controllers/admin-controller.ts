@@ -125,7 +125,7 @@ const Restaurants = async (req: Request, res: Response, next: NextFunction) => {
       rest_id.push(search.rows[i].id);
     }
     const images = await query.RestaurantImagePath(rest_id);
-    const imageMap = new Map();
+    const imageMap = new Map<string, string[]>();
     for (let i = 0; i < images.count; i++) {
       const futureDate = new Date(new Date().getTime() + 10 * 60000);
       const link = await storage.file(images.rows[i].path).getSignedUrl({
@@ -133,9 +133,9 @@ const Restaurants = async (req: Request, res: Response, next: NextFunction) => {
         expires: futureDate,
       });
       if (imageMap.has(images.rows[i].res_id)) {
-        imageMap.get(images.rows[i].res_id)?.push(link);
+        imageMap.get(images.rows[i].res_id)?.push(link[0]);
       } else {
-        imageMap.set(images.rows[i].res_id, [link]);
+        imageMap.set(images.rows[i].res_id, [link[0]]);
       }
     }
     const formatted_rest = search.rows;
@@ -182,7 +182,7 @@ const Dishes = async (req: Request, res: Response, next: NextFunction) => {
       dish_id.push(search.rows[i].id);
     }
     const images = await query.DishImagePath(dish_id);
-    const imageMap = new Map();
+    const imageMap = new Map<string, string[]>();
     for (let i = 0; i < images.count; i++) {
       const futureDate = new Date(new Date().getTime() + 10 * 60000);
       const link = await storage.file(images.rows[i].path).getSignedUrl({
@@ -190,9 +190,9 @@ const Dishes = async (req: Request, res: Response, next: NextFunction) => {
         expires: futureDate,
       });
       if (imageMap.has(images.rows[i].dish_id)) {
-        imageMap.get(images.rows[i].dish_id)?.push(link);
+        imageMap.get(images.rows[i].dish_id)?.push(link[0]);
       } else {
-        imageMap.set(images.rows[i].dish_id, [link]);
+        imageMap.set(images.rows[i].dish_id, [link[0]]);
       }
     }
     const formatted_dish = search.rows;
