@@ -6,12 +6,6 @@ import jwt from "jsonwebtoken";
 import query from "../helpers/db-query";
 import { ApiError } from "../error/errorClass";
 
-enum Role {
-  user = "user",
-  admin = "admin",
-  subadmin = "subadmin",
-}
-
 const Register = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name, email, password } = req.body;

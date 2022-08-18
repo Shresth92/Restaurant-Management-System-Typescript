@@ -2,12 +2,6 @@ import { Pool, QueryResult } from "pg";
 import pool_conf from "../database.json";
 let pool = new Pool(pool_conf["dev"]);
 
-enum Role {
-  user = "user",
-  admin = "admin",
-  subadmin = "subadmin",
-}
-
 type Created_by = string | undefined;
 
 function currDate() {

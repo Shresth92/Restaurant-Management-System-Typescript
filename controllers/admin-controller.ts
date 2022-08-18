@@ -5,12 +5,6 @@ import firebase from "../firebase/app";
 
 const storage = firebase.storage().bucket();
 
-enum Role {
-  user = "user",
-  admin = "admin",
-  subadmin = "subadmin",
-}
-
 const all = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit, page, role } = req.query;
@@ -221,17 +215,25 @@ const RestaurantImage = async (
   try {
     const { res_id } = req.params;
     const file = req.file;
-    let timestamp = new Date().toISOString();
-    const name = file?.originalname.split(".")[0];
     const type = file?.originalname.split(".")[1];
-    const fileName = `restaurants/${res_id}/` + `${name}_${timestamp}.${type}`;
-    storage.file(fileName).createWriteStream().end(file?.buffer);
-    await query.createRestaurantImage(
-      "rms-restaurant-image-upload",
-      fileName,
-      res_id
-    );
-    res.send("file uploaded");
+    if (type == "jpg" || type == "jpeg" || type == "png") {
+      let timestamp = new Date().toISOString();
+      const name = file?.originalname.split(".")[0];
+      const fileName =
+        `restaurants/${res_id}/` + `${name}_${timestamp}.${type}`;
+      storage.file(fileName).createWriteStream().end(file?.buffer);
+      await query.createRestaurantImage(
+        "rms-restaurant-image-upload",
+        fileName,
+        res_id
+      );
+      res.send("file uploaded");
+    } else {
+      const err = new Error(
+        `File type is '${type}'. It must be jpg, jpeg or png`
+      );
+      return next(ApiError.error(409, "Please upload image.", err.message));
+    }
   } catch (error: any) {
     return next(ApiError.error(500, "Something went wrong.", error.message));
   }
@@ -241,17 +243,24 @@ const DishImage = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { dish_id } = req.params;
     const file = req.file;
-    let timestamp = new Date().toISOString();
-    const name = file?.originalname.split(".")[0];
     const type = file?.originalname.split(".")[1];
-    const fileName = `dishes/${dish_id}/` + `${name}_${timestamp}.${type}`;
-    storage.file(fileName).createWriteStream().end(file?.buffer);
-    await query.createDishImage(
-      "rms-restaurant-image-upload",
-      fileName,
-      dish_id
-    );
-    res.send("file uploaded");
+    if (type == "jpg" || type == "jpeg" || type == "png") {
+      let timestamp = new Date().toISOString();
+      const name = file?.originalname.split(".")[0];
+      const fileName = `dishes/${dish_id}/` + `${name}_${timestamp}.${type}`;
+      storage.file(fileName).createWriteStream().end(file?.buffer);
+      await query.createDishImage(
+        "rms-restaurant-image-upload",
+        fileName,
+        dish_id
+      );
+      res.send("file uploaded");
+    } else {
+      const err = new Error(
+        `File type is '${type}'. It must be jpg, jpeg or png`
+      );
+      return next(ApiError.error(409, "Please upload image.", err.message));
+    }
   } catch (error: any) {
     return next(ApiError.error(500, "Something went wrong.", error.message));
   }

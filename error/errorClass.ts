@@ -1,9 +1,3 @@
-export interface CustomError {
-  statusCode?: Number;
-  message?: string;
-  error?: string;
-}
-
 export class ApiError {
   statusCode: Number;
   message: string;

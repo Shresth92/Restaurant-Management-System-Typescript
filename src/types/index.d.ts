@@ -1,14 +1,13 @@
 export {};
 
-enum Role {
-  user = "user",
-  admin = "admin",
-  subadmin = "subadmin",
-}
-
 declare global {
+  enum Role {
+    user = "user",
+    admin = "admin",
+    subadmin = "subadmin",
+  }
   namespace Express {
-    export interface Request {
+    interface Request {
       setrole?: Role;
       created_by?: string;
       session_id?: string;
